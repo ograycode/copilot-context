@@ -1,0 +1,17 @@
+version: 1
+dest: .copilot-context
+sources:
+  - name: cargo-lib
+    type: repo
+    repo: https://github.com/rust-lang/cargo.git
+    sparse: [README.md]
+    branch: gh-pages
+    dest: vendor/cargo-gh-pages
+  - name: api-specs
+    type: url
+    url: https://svelte.dev/llms-full.txt
+    dest: vendor/svetle/llms-full.txt
+  - name: local-notes
+    type: path
+    path: README.md
+    dest: vendor/notes/README.md
