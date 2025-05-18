@@ -32,7 +32,7 @@ pub enum Source {
 }
 
 pub fn load_config(path: &str) -> Result<ContextConfig, Box<dyn std::error::Error>> {
-    let f = std::fs::File::open(path)?;
-    let config: ContextConfig = serde_yaml::from_reader(f)?;
+    let f = std::fs::read_to_string(path)?;
+    let config: ContextConfig = toml::from_str(&f)?;
     Ok(config)
 }

@@ -4,7 +4,7 @@ Curated, reproducible local context folder generator for Copilot and LLM tools.
 
 ## Usage
 
-1. Edit `context.yaml` to declare your sources.
+1. Edit `context.toml` to declare your sources.
 2. Run `cargo run` to generate `.copilot_context/`.
 
 ## Features
@@ -20,4 +20,3 @@ Curated, reproducible local context folder generator for Copilot and LLM tools.
 
 - sparse option doesn't work yet.
 - path option where copying a directory isn't tested yet.
-- switch to toml instead of yaml

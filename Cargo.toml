@@ -7,7 +7,6 @@ description = "Curated, reproducible local context folder generator for Copilot 
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
-serde_yaml = "0.9"
 reqwest = { version = "0.11", features = ["blocking", "json"] }
 git2 = "0.18"
 walkdir = "2.4"
@@ -16,3 +15,4 @@ clap = { version = "4.0", features = ["derive"] }
 indicatif = "0.17"
 thiserror = "1.0"
 log = "0.4"
+toml = "0.8.22"

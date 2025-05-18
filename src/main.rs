@@ -13,8 +13,8 @@ mod git;
     about = "A tool to manage context folders for copilot"
 )]
 struct Cli {
-    /// Path to the context.yaml file
-    #[clap(short, long, default_value = "context.yaml")]
+    /// Path to the context.toml file
+    #[clap(short, long, default_value = "context.toml")]
     config: String,
 
     /// Verbose output
