@@ -4,7 +4,7 @@ sources:
   - name: cargo-lib
     type: repo
     repo: https://github.com/rust-lang/cargo.git
-    sparse: [README.md]
+    rm: ["CNAME"]
     branch: gh-pages
     dest: vendor/cargo-gh-pages
   - name: api-specs

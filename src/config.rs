@@ -13,19 +13,21 @@ pub enum Source {
     Repo {
         name: String,
         repo: String,
-        sparse: Option<Vec<String>>,
         branch: Option<String>,
         dest: String,
+        rm: Option<Vec<String>>,
     },
     Url {
         name: String,
         url: String,
         dest: String,
+        rm: Option<Vec<String>>,
     },
     Path {
         name: String,
         path: String,
         dest: String,
+        rm: Option<Vec<String>>,
     },
 }
 

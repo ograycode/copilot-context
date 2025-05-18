@@ -5,7 +5,6 @@ pub fn fetch_repo(
     repo_url: &str,
     dest: &str,
     branch: Option<&str>,
-    sparse: Option<&[String]>,
     verbose: bool,
 ) -> Result<(), String> {
     if Path::new(dest).exists() {
@@ -15,7 +14,6 @@ pub fn fetch_repo(
         return Ok(());
     }
 
-    // Clone repo (shallow by default)
     let mut clone_args = vec!["clone", "--depth=1"];
     if let Some(branch) = branch {
         clone_args.push("--branch");

@@ -2,8 +2,6 @@ use std::fs;
 use std::io;
 use std::path::Path;
 
-/// Recursively copy a file or directory from `src` to `dest`.
-/// If `src` is a file, copy it. If it's a directory, copy all contents recursively.
 pub fn copy_local(src: &str, dest: &str, verbose: bool) -> io::Result<()> {
     let src_path = Path::new(src);
     let dest_path = Path::new(dest);

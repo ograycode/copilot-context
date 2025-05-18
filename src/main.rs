@@ -45,11 +45,13 @@ fn main() {
         println!("copilot-context: destination directory: {:?}", config.dest);
     }
 
-    let root = std::env::current_dir().expect("Failed to get current directory");
     let dest = config.dest.as_ref().unwrap();
 
     std::fs::create_dir_all(dest).expect("Failed to create destination directory");
     std::env::set_current_dir(dest).expect("Failed to change working directory");
+
+    // Update root to the new current directory after changing into .copilot-context
+    let root = std::env::current_dir().expect("Failed to get current directory");
 
     println!("copilot-context: initializing context folder...");
     for source in config.sources {
@@ -57,36 +59,52 @@ fn main() {
             config::Source::Repo {
                 name,
                 repo,
-                sparse,
                 branch,
                 dest,
+                rm,
             } => {
                 if cli.verbose {
                     println!("copilot-context: processing repo source: {}", name);
                 }
-                if let Err(e) = git::fetch_repo(
-                    &repo,
-                    &dest,
-                    branch.as_deref(),
-                    sparse.as_deref(),
-                    cli.verbose,
-                ) {
+                if let Err(e) = git::fetch_repo(&repo, &dest, branch.as_deref(), cli.verbose) {
                     eprintln!("copilot-context: error fetching repo {}: {}", name, e);
                 }
+                if let Err(e) = rm_func(&root.join(dest), rm.unwrap_or_default(), cli.verbose) {
+                    eprintln!("copilot-context: error removing paths: {}", e);
+                }
             }
-            config::Source::Url { name, url, dest } => {
+            config::Source::Url {
+                name,
+                url,
+                dest,
+                rm,
+            } => {
                 if cli.verbose {
                     println!("copilot-context: processing URL source: {}", name);
                 }
                 if let Err(e) = fetch::fetch_url(&url, &dest, cli.verbose) {
                     eprintln!("copilot-context: error fetching url {}: {}", name, e);
                 }
+                if let Err(e) = rm_func(&root, rm.unwrap_or_default(), cli.verbose) {
+                    eprintln!("copilot-context: error removing paths: {}", e);
+                }
             }
-            config::Source::Path { name, path, dest } => {
+            config::Source::Path {
+                name,
+                path,
+                dest,
+                rm,
+            } => {
                 if cli.verbose {
                     println!("copilot-context: processing path source: {}", name);
                 }
-                let abs_source = root.join(path);
+                // Use the original project root for the source path
+                let project_root = std::env::current_dir()
+                    .expect("Failed to get current directory")
+                    .parent()
+                    .unwrap()
+                    .to_path_buf();
+                let abs_source = project_root.join(path);
                 let abs_source_str = abs_source
                     .as_path()
                     .to_str()
@@ -95,7 +113,42 @@ fn main() {
                 if let Err(e) = copy::copy_local(&abs_source_str, &dest, cli.verbose) {
                     eprintln!("copilot-context: error copying path {}: {}", name, e);
                 }
+                if let Err(e) = rm_func(&root, rm.unwrap_or_default(), cli.verbose) {
+                    eprintln!("copilot-context: error removing paths: {}", e);
+                }
             }
         }
     }
+}
+
+fn rm_func(root: &std::path::PathBuf, rm: Vec<String>, verbose: bool) -> Result<(), String> {
+    for path in rm {
+        let abs_path = root.join(&path);
+        if abs_path.exists() {
+            let metadata = std::fs::metadata(&abs_path).map_err(|e| {
+                format!("failed to get metadata for '{}': {}", abs_path.display(), e)
+            })?;
+            if metadata.is_dir() {
+                std::fs::remove_dir_all(&abs_path).map_err(|e| {
+                    format!("failed to remove directory '{}': {}", abs_path.display(), e)
+                })?;
+                if verbose {
+                    println!("copilot-context: removed directory: {}", abs_path.display());
+                }
+            } else {
+                std::fs::remove_file(&abs_path).map_err(|e| {
+                    format!("failed to remove file '{}': {}", abs_path.display(), e)
+                })?;
+                if verbose {
+                    println!("copilot-context: removed file: {}", abs_path.display());
+                }
+            }
+        } else if verbose {
+            println!(
+                "copilot-context: path '{}' does not exist, skipping",
+                abs_path.display()
+            );
+        }
+    }
+    Ok(())
 }
