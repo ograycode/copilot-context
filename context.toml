@@ -1,23 +1,22 @@
 version = 1
-
 dest = ".copilot-context"
 
 [[sources]]
-name = "cargo-lib"
 type = "repo"
+name = "cargo-lib"
 repo = "https://github.com/rust-lang/cargo.git"
-files = ["!CNAME"]
 branch = "gh-pages"
 dest = "vendor/cargo-gh-pages"
+files = ["!CNAME"]
 
 [[sources]]
-name = "api-specs"
 type = "url"
+name = "api-specs"
 url = "https://raw.githubusercontent.com/softprops/action-gh-release/refs/heads/master/README.md"
 dest = "softprops/action-gh-release/README.md"
 
 [[sources]]
-name = "local-notes"
 type = "path"
+name = "local-notes"
 path = "README.md"
 dest = "vendor/notes/README.md"

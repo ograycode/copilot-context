@@ -1,4 +1,4 @@
-use clap::Parser;
+use clap::{Parser, Subcommand};
 
 mod config;
 mod copy;
@@ -6,6 +6,53 @@ mod fetch;
 mod git;
 
 use config::{match_files_and_mark, parse_file_rules};
+
+#[derive(Subcommand, Debug)]
+enum Commands {
+    /// List all sources
+    List,
+    /// Add a new source
+    Add {
+        #[clap(long)]
+        name: String,
+        #[clap(long)]
+        kind: String,
+        #[clap(long)]
+        repo: Option<String>,
+        #[clap(long)]
+        url: Option<String>,
+        #[clap(long)]
+        path: Option<String>,
+        #[clap(long)]
+        dest: String,
+        #[clap(long)]
+        branch: Option<String>,
+        #[clap(long)]
+        files: Option<Vec<String>>,
+    },
+    /// Remove a source by name
+    Remove {
+        #[clap(long)]
+        name: String,
+    },
+    /// Update a source by name
+    Update {
+        #[clap(long)]
+        name: String,
+        #[clap(long)]
+        repo: Option<String>,
+        #[clap(long)]
+        url: Option<String>,
+        #[clap(long)]
+        path: Option<String>,
+        #[clap(long)]
+        dest: Option<String>,
+        #[clap(long)]
+        branch: Option<String>,
+        #[clap(long)]
+        files: Option<Vec<String>>,
+    },
+}
 
 #[derive(Parser, Debug)]
 #[clap(
@@ -22,10 +69,85 @@ struct Cli {
     /// Verbose output
     #[clap(short, long)]
     verbose: bool,
+
+    #[clap(subcommand)]
+    command: Option<Commands>,
 }
 
 fn main() {
     let cli = Cli::parse();
+    if let Some(cmd) = &cli.command {
+        use config::{load_config, make_source, save_config, SourceUpdate};
+        let mut config = load_config(&cli.config).expect("Failed to load config");
+        match cmd {
+            Commands::List => {
+                for src in &config.sources {
+                    println!("{:?}", src);
+                }
+                return;
+            }
+            Commands::Add {
+                name,
+                kind,
+                repo,
+                url,
+                path,
+                dest,
+                branch,
+                files,
+            } => {
+                let new_source = make_source(
+                    kind,
+                    name.clone(),
+                    repo.clone(),
+                    url.clone(),
+                    path.clone(),
+                    dest.clone(),
+                    branch.clone(),
+                    files.clone(),
+                );
+                config.add_source(new_source);
+                save_config(&cli.config, &config).expect("Failed to save config");
+                println!("Source added.");
+                return;
+            }
+            Commands::Remove { name } => {
+                if config.remove_source(name) {
+                    save_config(&cli.config, &config).expect("Failed to save config");
+                    println!("Source removed.");
+                } else {
+                    println!("No source found with name: {}", name);
+                }
+                return;
+            }
+            Commands::Update {
+                name,
+                repo,
+                url,
+                path,
+                dest,
+                branch,
+                files,
+            } => {
+                let update = SourceUpdate::from_args(
+                    repo.clone(),
+                    url.clone(),
+                    path.clone(),
+                    dest.clone(),
+                    branch.clone(),
+                    files.clone(),
+                );
+                if config.update_source(name, update) {
+                    save_config(&cli.config, &config).expect("Failed to save config");
+                    println!("Source updated.");
+                } else {
+                    println!("No source found with name: {}", name);
+                }
+                return;
+            }
+        }
+    }
+
     if cli.verbose {
         println!("copilot-context: verbose mode enabled");
     }
