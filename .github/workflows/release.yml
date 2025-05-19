@@ -8,6 +8,10 @@ jobs:
   build:
     name: Build Binaries
     runs-on: ubuntu-latest
+    env:
+      OPENSSL_DIR: /usr/lib/ssl
+      OPENSSL_INCLUDE_DIR: /usr/include/openssl
+      OPENSSL_LIB_DIR: /usr/lib/ssl
     strategy:
       matrix:
         target:
@@ -22,12 +26,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install OpenSSL
+      - name: Install Dependencies
         run: sudo apt-get update && sudo apt-get install -y libssl-dev
 
-      - name: Set OpenSSL Environment Variable
+      - name: Verify OpenSSL Installation
         run: |
-          echo "OPENSSL_DIR=$(openssl version -d | sed 's/OPENSSL_DIR: //')" >> $GITHUB_ENV
+          openssl version
+          ls -l /usr/lib/ssl
+          ls -l /usr/include/openssl
 
       - name: Install Rust
         uses: actions-rs/toolchain@v1
