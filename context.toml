@@ -13,8 +13,8 @@ dest = "vendor/cargo-gh-pages"
 [[sources]]
 name = "api-specs"
 type = "url"
-url = "https://svelte.dev/llms-full.txt"
-dest = "vendor/svetle/llms-full.txt"
+url = "https://raw.githubusercontent.com/softprops/action-gh-release/refs/heads/master/README.md"
+dest = "softprops/action-gh-release/README.md"
 
 [[sources]]
 name = "local-notes"
