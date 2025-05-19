@@ -22,6 +22,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Install OpenSSL
+        run: sudo apt-get update && sudo apt-get install -y libssl-dev
+
+      - name: Set OpenSSL Environment Variable
+        run: |
+          echo "OPENSSL_DIR=$(openssl version -d | sed 's/OPENSSL_DIR: //')" >> $GITHUB_ENV
+
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
