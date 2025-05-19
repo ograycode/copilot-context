@@ -6,7 +6,7 @@ dest = ".copilot-context"
 name = "cargo-lib"
 type = "repo"
 repo = "https://github.com/rust-lang/cargo.git"
-rm = ["CNAME"]
+files = ["!CNAME"]
 branch = "gh-pages"
 dest = "vendor/cargo-gh-pages"
 

@@ -16,6 +16,7 @@ indicatif = "0.17"
 thiserror = "1.0"
 log = "0.4"
 toml = "0.8.22"
+glob = "0.3.2"
 
 [dev-dependencies]
 mockito = "1.7.0"

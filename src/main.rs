@@ -5,6 +5,8 @@ mod copy;
 mod fetch;
 mod git;
 
+use config::{match_files_and_mark, parse_file_rules};
+
 #[derive(Parser, Debug)]
 #[clap(
     name = "copilot-context",
@@ -23,7 +25,6 @@ struct Cli {
 }
 
 fn main() {
-    // TODO: CLI parsing, load config, dispatch sources
     let cli = Cli::parse();
     if cli.verbose {
         println!("copilot-context: verbose mode enabled");
@@ -61,7 +62,7 @@ fn main() {
                 repo,
                 branch,
                 dest,
-                rm,
+                files,
             } => {
                 if cli.verbose {
                     println!("copilot-context: processing repo source: {}", name);
@@ -69,15 +70,17 @@ fn main() {
                 if let Err(e) = git::fetch_repo(&repo, &dest, branch.as_deref(), cli.verbose) {
                     eprintln!("copilot-context: error fetching repo {}: {}", name, e);
                 }
-                if let Err(e) = rm_func(&root.join(dest), rm.unwrap_or_default(), cli.verbose) {
-                    eprintln!("copilot-context: error removing paths: {}", e);
+                if let Some(files) = files {
+                    if let Err(e) = files_func(&root.join(dest), files, cli.verbose) {
+                        eprintln!("copilot-context: error applying files rules: {}", e);
+                    }
                 }
             }
             config::Source::Url {
                 name,
                 url,
                 dest,
-                rm,
+                files,
             } => {
                 if cli.verbose {
                     println!("copilot-context: processing URL source: {}", name);
@@ -85,20 +88,21 @@ fn main() {
                 if let Err(e) = fetch::fetch_url(&url, &dest, cli.verbose) {
                     eprintln!("copilot-context: error fetching url {}: {}", name, e);
                 }
-                if let Err(e) = rm_func(&root, rm.unwrap_or_default(), cli.verbose) {
-                    eprintln!("copilot-context: error removing paths: {}", e);
+                if let Some(files) = files {
+                    if let Err(e) = files_func(&root, files, cli.verbose) {
+                        eprintln!("copilot-context: error applying files rules: {}", e);
+                    }
                 }
             }
             config::Source::Path {
                 name,
                 path,
                 dest,
-                rm,
+                files,
             } => {
                 if cli.verbose {
                     println!("copilot-context: processing path source: {}", name);
                 }
-                // Use the original project root for the source path
                 let project_root = std::env::current_dir()
                     .expect("Failed to get current directory")
                     .parent()
@@ -113,41 +117,46 @@ fn main() {
                 if let Err(e) = copy::copy_local(&abs_source_str, &dest, cli.verbose) {
                     eprintln!("copilot-context: error copying path {}: {}", name, e);
                 }
-                if let Err(e) = rm_func(&root, rm.unwrap_or_default(), cli.verbose) {
-                    eprintln!("copilot-context: error removing paths: {}", e);
+                if let Some(files) = files {
+                    if let Err(e) = files_func(&root, files, cli.verbose) {
+                        eprintln!("copilot-context: error applying files rules: {}", e);
+                    }
                 }
             }
         }
     }
 }
 
-fn rm_func(root: &std::path::PathBuf, rm: Vec<String>, verbose: bool) -> Result<(), String> {
-    for path in rm {
-        let abs_path = root.join(&path);
-        if abs_path.exists() {
-            let metadata = std::fs::metadata(&abs_path).map_err(|e| {
-                format!("failed to get metadata for '{}': {}", abs_path.display(), e)
-            })?;
-            if metadata.is_dir() {
-                std::fs::remove_dir_all(&abs_path).map_err(|e| {
-                    format!("failed to remove directory '{}': {}", abs_path.display(), e)
+fn files_func(root: &std::path::PathBuf, files: Vec<String>, verbose: bool) -> Result<(), String> {
+    let rules = parse_file_rules(&files);
+    let matches = match_files_and_mark(root, &rules);
+    for (path, keep) in matches {
+        if !keep {
+            if path.exists() {
+                let metadata = std::fs::metadata(&path).map_err(|e| {
+                    format!("failed to get metadata for '{}': {}", path.display(), e)
                 })?;
-                if verbose {
-                    println!("copilot-context: removed directory: {}", abs_path.display());
+                if metadata.is_dir() {
+                    std::fs::remove_dir_all(&path).map_err(|e| {
+                        format!("failed to remove directory '{}': {}", path.display(), e)
+                    })?;
+                    if verbose {
+                        println!("copilot-context: removed directory: {}", path.display());
+                    }
+                } else {
+                    std::fs::remove_file(&path).map_err(|e| {
+                        format!("failed to remove file '{}': {}", path.display(), e)
+                    })?;
+                    if verbose {
+                        println!("copilot-context: removed file: {}", path.display());
+                    }
                 }
-            } else {
-                std::fs::remove_file(&abs_path).map_err(|e| {
-                    format!("failed to remove file '{}': {}", abs_path.display(), e)
-                })?;
-                if verbose {
-                    println!("copilot-context: removed file: {}", abs_path.display());
-                }
+            } else if verbose {
+                println!(
+                    "copilot-context: path '{}' does not exist, skipping",
+                    path.display()
+                );
             }
-        } else if verbose {
-            println!(
-                "copilot-context: path '{}' does not exist, skipping",
-                abs_path.display()
-            );
         }
     }
     Ok(())
