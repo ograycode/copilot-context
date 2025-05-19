@@ -46,4 +46,4 @@ jobs:
         with:
           files: copilot-context-${{ github.ref_name }}-${{ matrix.target }}*
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_RELEASE_TOKEN }}
