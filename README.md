@@ -15,8 +15,3 @@ Curated, reproducible local context folder generator for Copilot and LLM tools.
 - Download raw files via HTTP(S)
 - Flatten folder structure / rename output dirs
 - Output summary log or JSON metadata for each run
-
-## Issues
-
-- sparse option doesn't work yet.
-- path option where copying a directory isn't tested yet.
