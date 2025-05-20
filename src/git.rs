@@ -159,20 +159,21 @@ mod tests {
 
         let url = format!("file://{}", repo_dir.to_str().unwrap());
         let _ = fetch_repo(&url, dest.to_str().unwrap(), None, false);
-        let git_dir = dest.join(".git");
         #[cfg(unix)]
         {
             use std::fs::Permissions;
             use std::os::unix::fs::PermissionsExt;
+            let git_dir = dest.join(".git");
             fs::set_permissions(&git_dir, Permissions::from_mode(0o000)).ok();
-        }
-        let res = fetch_repo("file:///nonexistent", dest.to_str().unwrap(), None, false);
-        #[cfg(unix)]
-        {
-            use std::fs::Permissions;
-            use std::os::unix::fs::PermissionsExt;
+            let res = fetch_repo("file:///nonexistent", dest.to_str().unwrap(), None, false);
             fs::set_permissions(&git_dir, Permissions::from_mode(0o755)).ok();
+            assert!(res.is_ok() || res.is_err());
         }
-        assert!(res.is_ok() || res.is_err());
+        #[cfg(not(unix))]
+        {
+            let _git_dir = dest.join(".git");
+            let res = fetch_repo("file:///nonexistent", dest.to_str().unwrap(), None, false);
+            assert!(res.is_ok() || res.is_err());
+        }
     }
 }
