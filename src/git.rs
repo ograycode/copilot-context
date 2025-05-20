@@ -58,8 +58,6 @@ pub fn fetch_repo(
 mod tests {
     use super::*;
     use std::fs;
-    use std::fs::Permissions;
-    use std::os::unix::fs::PermissionsExt;
     use std::sync::Mutex;
     use tempfile::tempdir;
 
@@ -162,9 +160,19 @@ mod tests {
         let url = format!("file://{}", repo_dir.to_str().unwrap());
         let _ = fetch_repo(&url, dest.to_str().unwrap(), None, false);
         let git_dir = dest.join(".git");
-        fs::set_permissions(&git_dir, Permissions::from_mode(0o000)).ok();
+        #[cfg(unix)]
+        {
+            use std::fs::Permissions;
+            use std::os::unix::fs::PermissionsExt;
+            fs::set_permissions(&git_dir, Permissions::from_mode(0o000)).ok();
+        }
         let res = fetch_repo("file:///nonexistent", dest.to_str().unwrap(), None, false);
-        fs::set_permissions(&git_dir, Permissions::from_mode(0o755)).ok();
+        #[cfg(unix)]
+        {
+            use std::fs::Permissions;
+            use std::os::unix::fs::PermissionsExt;
+            fs::set_permissions(&git_dir, Permissions::from_mode(0o755)).ok();
+        }
         assert!(res.is_ok() || res.is_err());
     }
 }
