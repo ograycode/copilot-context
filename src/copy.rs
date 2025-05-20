@@ -24,7 +24,7 @@ pub fn copy_local(src: &str, dest: &str, verbose: bool) -> io::Result<()> {
             "dest_path.parent().unwrap() = {}",
             dest_path.parent().unwrap().display()
         );
-        fs::copy(&src_path, &dest_path).expect("Failed to copy file");
+        fs::copy(src_path, dest_path).expect("Failed to copy file");
     } else if src_path.is_dir() {
         copy_dir_all(src_path, dest_path, verbose)?;
     }

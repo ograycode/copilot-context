@@ -57,6 +57,7 @@ impl SourceUpdate {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn make_source(
     kind: &str,
     name: String,

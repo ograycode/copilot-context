@@ -164,7 +164,7 @@ fn main() {
         println!("copilot-context: loaded config: {:?}", config);
     }
 
-    if !config.dest.is_some() {
+    if config.dest.is_none() {
         config.dest = Some(".copilot-context".to_string());
     }
 
@@ -240,7 +240,7 @@ fn main() {
                     .to_str()
                     .expect("Failed to convert path to string");
                 println!("copilot-context: absolute source path: {}", abs_source_str);
-                if let Err(e) = copy::copy_local(&abs_source_str, &dest, cli.verbose) {
+                if let Err(e) = copy::copy_local(abs_source_str, &dest, cli.verbose) {
                     eprintln!("copilot-context: error copying path {}: {}", name, e);
                 }
                 if let Some(files) = files {
@@ -253,7 +253,7 @@ fn main() {
     }
 }
 
-fn files_func(root: &std::path::PathBuf, files: Vec<String>, verbose: bool) -> Result<(), String> {
+fn files_func(root: &std::path::Path, files: Vec<String>, verbose: bool) -> Result<(), String> {
     let rules = parse_file_rules(&files);
     let matches = match_files_and_mark(root, &rules);
     for (path, keep) in matches {
