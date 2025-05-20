@@ -57,10 +57,8 @@ pub fn fetch_repo(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::env;
     use std::fs;
     use std::os::unix::fs::PermissionsExt;
-    use std::path::PathBuf;
     use std::sync::Mutex;
     use tempfile::tempdir;
 
