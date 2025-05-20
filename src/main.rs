@@ -10,46 +10,50 @@ use config::{match_files_and_mark, parse_file_rules};
 #[derive(Subcommand, Debug)]
 enum Commands {
     /// List all sources
+    #[clap(about = "List all sources in the context configuration")]
     List,
     /// Add a new source
+    #[clap(about = "Add a new source to the context configuration")]
     Add {
-        #[clap(long)]
+        #[clap(long, help = "Name of the source")]
         name: String,
-        #[clap(long)]
+        #[clap(long, help = "Kind of the source: repo, url, or path")]
         kind: String,
-        #[clap(long)]
+        #[clap(long, help = "Git repository URL (for kind=repo)")]
         repo: Option<String>,
-        #[clap(long)]
+        #[clap(long, help = "URL to fetch (for kind=url)")]
         url: Option<String>,
-        #[clap(long)]
+        #[clap(long, help = "Local path to copy (for kind=path)")]
         path: Option<String>,
-        #[clap(long)]
+        #[clap(long, help = "Destination directory inside context folder")]
         dest: String,
-        #[clap(long)]
+        #[clap(long, help = "Branch to use (for kind=repo)")]
         branch: Option<String>,
-        #[clap(long)]
+        #[clap(long, help = "File rules to include/exclude (glob patterns)")]
         files: Option<Vec<String>>,
     },
     /// Remove a source by name
+    #[clap(about = "Remove a source from the context configuration by name")]
     Remove {
-        #[clap(long)]
+        #[clap(long, help = "Name of the source to remove")]
         name: String,
     },
     /// Update a source by name
+    #[clap(about = "Update an existing source in the context configuration by name")]
     Update {
-        #[clap(long)]
+        #[clap(long, help = "Name of the source to update")]
         name: String,
-        #[clap(long)]
+        #[clap(long, help = "New git repository URL (for kind=repo)")]
         repo: Option<String>,
-        #[clap(long)]
+        #[clap(long, help = "New URL to fetch (for kind=url)")]
         url: Option<String>,
-        #[clap(long)]
+        #[clap(long, help = "New local path to copy (for kind=path)")]
         path: Option<String>,
-        #[clap(long)]
+        #[clap(long, help = "New destination directory inside context folder")]
         dest: Option<String>,
-        #[clap(long)]
+        #[clap(long, help = "New branch to use (for kind=repo)")]
         branch: Option<String>,
-        #[clap(long)]
+        #[clap(long, help = "New file rules to include/exclude (glob patterns)")]
         files: Option<Vec<String>>,
     },
 }
