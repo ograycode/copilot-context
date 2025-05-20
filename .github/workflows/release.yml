@@ -44,8 +44,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          components: clippy, rustfmt
+          cache: true
+
       - name: Install cargo‑dist
-        run: cargo install cargo-dist --locked
+        run: cargo install cargo-dist --locked --force
 
       - name: Add cargo bin to PATH
         run: echo "$HOME/.cargo/bin" >> $GITHUB_PATH
