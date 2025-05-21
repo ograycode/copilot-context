@@ -1,10 +1,11 @@
 [package]
 name = "copilot-context"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 
 description = "Curated, reproducible local context folder generator for Copilot and LLM tools."
 repository = "https://github.com/ograycode/copilot-context"
+license = "MIT"
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }

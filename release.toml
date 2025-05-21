@@ -1,0 +1,14 @@
+# Configuration for cargo-release
+# See https://github.com/crate-ci/cargo-release/blob/master/docs/reference.md for all options
+
+# Push commits and tags by default
+push = true
+# Generate a tag like v1.2.3
+tag-name = "v{{version}}"
+# Use conventional commits for changelog (optional, comment out if not wanted)
+#conventional_commits = true
+# Run cargo-dist after release (optional, if you want to trigger dist locally)
+#pre-release-commit-message = "chore: prepare for release {{version}}"
+#post-release-commit-message = "chore: start next development iteration"
+#pre-release-hook = "cargo dist build"
+#post-release-hook = "cargo dist publish"
