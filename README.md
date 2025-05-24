@@ -19,7 +19,7 @@ A reproducible, declarative context folder generator for GitHub Copilot and LLM 
 2. Run:
 
 ```sh
-cargo run
+copilot-context
 ```
 
 This generates a `.copilot-context/` folder with your curated files.
@@ -62,12 +62,49 @@ dest = "vendor/notes/README.md"
 
 ## CLI Usage
 
-- List sources: `cargo run -- list`
-- Add a source: `cargo run -- add --name foo --kind repo --repo <url> --dest <dir>`
-- Remove a source: `cargo run -- remove --name foo`
-- Update a source: `cargo run -- update --name foo --repo <new-url>`
+- List sources: `copilot-context list`
+- Add a source: `copilot-context add --name foo --kind repo --repo <url> --dest <dir>`
+- Remove a source: `copilot-context remove --name foo`
+- Update a source: `copilot-context update --name foo --repo <new-url>`
 
-See `cargo run -- --help` for all options.
+See `copilot-context --help` for all options.
+
+## Install
+
+### Download the Latest Release
+
+1. Go to the [Releases page](https://github.com/ograycode/copilot-context/releases) and download the latest binary for your platform (macOS, Linux, or Windows).
+2. Unpack the archive if necessary.
+3. Move the binary to a directory in your `$PATH`, for example:
+   ```sh
+   mv copilot-context /usr/local/bin/
+   chmod +x /usr/local/bin/copilot-context
+   ```
+4. Verify installation:
+   ```sh
+   copilot-context --help
+   ```
+
+### Build from Source
+
+1. Ensure you have [Rust](https://rustup.rs/) installed (edition 2021).
+2. Clone the repository:
+   ```sh
+   git clone https://github.com/ograycode/copilot-context.git
+   cd copilot-context
+   ```
+3. Build the binary:
+   ```sh
+   cargo build --release
+   ```
+4. Move the binary to a directory in your `$PATH` (optional):
+   ```sh
+   cp target/release/copilot-context /usr/local/bin/
+   ```
+5. Verify installation:
+   ```sh
+   copilot-context --help
+   ```
 
 ## Requirements
 
