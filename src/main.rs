@@ -4,6 +4,7 @@ mod config;
 mod copy;
 mod fetch;
 mod git;
+mod clean;
 
 use config::{match_files_and_mark, parse_file_rules};
 
@@ -59,6 +60,9 @@ enum Commands {
     /// Initialize a new context.toml file
     #[clap(about = "Generate a default context.toml if one does not exist")]
     Init,
+    /// Clean the context folder, removing files not specified in the configuration
+    #[clap(about = "Clean the context folder, removing files not specified in the configuration")]
+    Clean,
 }
 
 #[derive(Parser, Debug)]
@@ -162,6 +166,15 @@ fn main() {
                     println!("Source updated.");
                 } else {
                     println!("No source found with name: {}", name);
+                }
+                return;
+            }
+            Commands::Clean => {
+                let config = load_config(&cli.config).expect("Failed to load config");
+                let dest_string = config.dest.clone().unwrap_or_else(|| ".copilot-context".to_string());
+                
+                if let Err(e) = clean::clean_context_folder(&dest_string, &config.sources, cli.verbose) {
+                    eprintln!("Error cleaning context folder: {}", e);
                 }
                 return;
             }

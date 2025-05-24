@@ -59,6 +59,7 @@ dest = "vendor/notes/README.md"
 - **Download raw files via HTTP(S)**
 - **Flatten/rename output structure**
 - **Summary log or JSON metadata output**
+- **Clean command**: Remove files not specified in the configuration
 
 ## CLI Usage
 
@@ -67,6 +68,7 @@ dest = "vendor/notes/README.md"
 - Remove a source: `copilot-context remove --name foo`
 - Update a source: `copilot-context update --name foo --repo <new-url>`
 - Initialize a config: `copilot-context init`
+- Clean context folder: `copilot-context clean`
 
 See `copilot-context --help` for all options.
 
