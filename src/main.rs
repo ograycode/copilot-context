@@ -56,6 +56,9 @@ enum Commands {
         #[clap(long, help = "New file rules to include/exclude (glob patterns)")]
         files: Option<Vec<String>>,
     },
+    /// Initialize a new context.toml file
+    #[clap(about = "Generate a default context.toml if one does not exist")]
+    Init,
 }
 
 #[derive(Parser, Debug)]
@@ -81,10 +84,20 @@ struct Cli {
 fn main() {
     let cli = Cli::parse();
     if let Some(cmd) = &cli.command {
-        use config::{load_config, make_source, save_config, SourceUpdate};
-        let mut config = load_config(&cli.config).expect("Failed to load config");
+        use config::{
+            load_config, make_source, save_config, write_default_config_if_missing, SourceUpdate,
+        };
         match cmd {
+            Commands::Init => {
+                if write_default_config_if_missing(&cli.config).unwrap() {
+                    println!("Initialized new {}", &cli.config);
+                } else {
+                    println!("{} already exists, not overwritten.", &cli.config);
+                }
+                return;
+            }
             Commands::List => {
+                let config = load_config(&cli.config).expect("Failed to load config");
                 for src in &config.sources {
                     println!("{:?}", src);
                 }
@@ -100,6 +113,7 @@ fn main() {
                 branch,
                 files,
             } => {
+                let mut config = load_config(&cli.config).expect("Failed to load config");
                 let new_source = make_source(
                     kind,
                     name.clone(),
@@ -116,6 +130,7 @@ fn main() {
                 return;
             }
             Commands::Remove { name } => {
+                let mut config = load_config(&cli.config).expect("Failed to load config");
                 if config.remove_source(name) {
                     save_config(&cli.config, &config).expect("Failed to save config");
                     println!("Source removed.");
@@ -133,6 +148,7 @@ fn main() {
                 branch,
                 files,
             } => {
+                let mut config = load_config(&cli.config).expect("Failed to load config");
                 let update = SourceUpdate::from_args(
                     repo.clone(),
                     url.clone(),

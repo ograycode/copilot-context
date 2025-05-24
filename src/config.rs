@@ -236,6 +236,40 @@ pub fn save_config(path: &str, config: &ContextConfig) -> Result<(), Box<dyn std
     Ok(())
 }
 
+pub fn write_default_config_if_missing(path: &str) -> Result<bool, Box<dyn std::error::Error>> {
+    use std::path::Path;
+    if Path::new(path).exists() {
+        return Ok(false);
+    }
+    let default = ContextConfig {
+        version: 1,
+        dest: Some(".copilot-context".to_string()),
+        sources: vec![
+            Source::Repo {
+                name: "example-repo".to_string(),
+                repo: "https://github.com/example/repo.git".to_string(),
+                branch: Some("main".to_string()),
+                dest: "vendor/example-repo".to_string(),
+                files: Some(vec!["*".to_string()]),
+            },
+            Source::Url {
+                name: "example-url".to_string(),
+                url: "https://example.com/file.txt".to_string(),
+                dest: "example/file.txt".to_string(),
+                files: None,
+            },
+            Source::Path {
+                name: "local-notes".to_string(),
+                path: "README.md".to_string(),
+                dest: "vendor/notes/README.md".to_string(),
+                files: None,
+            },
+        ],
+    };
+    save_config(path, &default)?;
+    Ok(true)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -442,5 +476,36 @@ mod tests {
         // Try to save to a directory path, which should fail
         let result = save_config("/", &config);
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_write_default_config_if_missing() {
+        let dir = tempdir().unwrap();
+        let file_path = dir.path().join("context.toml");
+        // Ensure the file does not exist
+        assert!(!file_path.exists());
+        // Write default config
+        let result = write_default_config_if_missing(file_path.to_str().unwrap());
+        assert!(result.is_ok());
+        assert!(result.unwrap());
+        // Ensure the file was created
+        assert!(file_path.exists());
+        // Check the contents
+        let config = load_config(file_path.to_str().unwrap()).unwrap();
+        assert_eq!(config.version, 1);
+        assert_eq!(config.dest, Some(".copilot-context".to_string()));
+        assert_eq!(config.sources.len(), 3);
+    }
+
+    #[test]
+    fn test_write_default_config_if_exists() {
+        let dir = tempdir().unwrap();
+        let file_path = dir.path().join("context.toml");
+        // Create the file first
+        fs::write(&file_path, "version = 1\n").unwrap();
+        // Try to write default config
+        let result = write_default_config_if_missing(file_path.to_str().unwrap());
+        assert!(result.is_ok());
+        assert!(!result.unwrap()); // Should not overwrite, so returns false
     }
 }

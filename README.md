@@ -66,6 +66,7 @@ dest = "vendor/notes/README.md"
 - Add a source: `copilot-context add --name foo --kind repo --repo <url> --dest <dir>`
 - Remove a source: `copilot-context remove --name foo`
 - Update a source: `copilot-context update --name foo --repo <new-url>`
+- Initialize a config: `copilot-context init`
 
 See `copilot-context --help` for all options.
 
