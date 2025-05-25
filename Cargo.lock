@@ -240,7 +240,7 @@ dependencies = [
 
 [[package]]
 name = "copilot-context"
-version = "0.1.0-alpha.19"
+version = "0.1.0-alpha.20"
 dependencies = [
  "clap",
  "git2",
