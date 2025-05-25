@@ -49,6 +49,20 @@ type = "path"
 name = "local-notes"
 path = "README.md"
 dest = "vendor/notes/README.md"
+
+[[sources]]
+type = "sh"
+name = "example-script"
+# The script content can be a multiline string
+script = """
+ls -la
+echo \"Hello from a shell script!\"
+# You can run any shell commands here
+"""
+# The destination for 'sh' type can be a relative path within the context folder
+# or "." to run in the root of the context folder.
+# The script will be executed with `sh -c "<script_content>"` in this directory.
+dest = "script_output"
 ```
 
 ## Features
@@ -57,6 +71,7 @@ dest = "vendor/notes/README.md"
 - **Glob file filtering**: Include/exclude files with patterns
 - **Copy from local paths**: Add your own files
 - **Download raw files via HTTP(S)**
+- **Run shell scripts**: Execute custom shell commands and include their output or side-effects.
 - **Flatten/rename output structure**
 - **Summary log or JSON metadata output**
 - **Clean command**: Remove files not specified in the configuration
@@ -65,8 +80,10 @@ dest = "vendor/notes/README.md"
 
 - List sources: `copilot-context list`
 - Add a source: `copilot-context add --name foo --kind repo --repo <url> --dest <dir>`
+  - For `sh` kind: `copilot-context add --name my-script --kind sh --script "echo hello" --dest .`
 - Remove a source: `copilot-context remove --name foo`
 - Update a source: `copilot-context update --name foo --repo <new-url>`
+  - For `sh` kind: `copilot-context update --name my-script --script "echo updated"`
 - Initialize a config: `copilot-context init`
 - Clean context folder: `copilot-context clean`
 

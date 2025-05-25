@@ -1,10 +1,11 @@
 use clap::{Parser, Subcommand};
 
+mod clean;
 mod config;
 mod copy;
 mod fetch;
 mod git;
-mod clean;
+mod sh;
 
 use config::{match_files_and_mark, parse_file_rules};
 
@@ -18,7 +19,7 @@ enum Commands {
     Add {
         #[clap(long, help = "Name of the source")]
         name: String,
-        #[clap(long, help = "Kind of the source: repo, url, or path")]
+        #[clap(long, help = "Kind of the source: repo, url, path, or sh")]
         kind: String,
         #[clap(long, help = "Git repository URL (for kind=repo)")]
         repo: Option<String>,
@@ -32,6 +33,8 @@ enum Commands {
         branch: Option<String>,
         #[clap(long, help = "File rules to include/exclude (glob patterns)")]
         files: Option<Vec<String>>,
+        #[clap(long, help = "Shell script to run (for kind=sh). Can be multiline.")]
+        script: Option<String>,
     },
     /// Remove a source by name
     #[clap(about = "Remove a source from the context configuration by name")]
@@ -56,6 +59,8 @@ enum Commands {
         branch: Option<String>,
         #[clap(long, help = "New file rules to include/exclude (glob patterns)")]
         files: Option<Vec<String>>,
+        #[clap(long, help = "New shell script to run (for kind=sh)")]
+        script: Option<String>,
     },
     /// Initialize a new context.toml file
     #[clap(about = "Generate a default context.toml if one does not exist")]
@@ -116,6 +121,7 @@ fn main() {
                 dest,
                 branch,
                 files,
+                script,
             } => {
                 let mut config = load_config(&cli.config).expect("Failed to load config");
                 let new_source = make_source(
@@ -127,6 +133,7 @@ fn main() {
                     dest.clone(),
                     branch.clone(),
                     files.clone(),
+                    script.clone(),
                 );
                 config.add_source(new_source);
                 save_config(&cli.config, &config).expect("Failed to save config");
@@ -151,6 +158,7 @@ fn main() {
                 dest,
                 branch,
                 files,
+                script,
             } => {
                 let mut config = load_config(&cli.config).expect("Failed to load config");
                 let update = SourceUpdate::from_args(
@@ -160,6 +168,7 @@ fn main() {
                     dest.clone(),
                     branch.clone(),
                     files.clone(),
+                    script.clone(),
                 );
                 if config.update_source(name, update) {
                     save_config(&cli.config, &config).expect("Failed to save config");
@@ -171,9 +180,14 @@ fn main() {
             }
             Commands::Clean => {
                 let config = load_config(&cli.config).expect("Failed to load config");
-                let dest_string = config.dest.clone().unwrap_or_else(|| ".copilot-context".to_string());
-                
-                if let Err(e) = clean::clean_context_folder(&dest_string, &config.sources, cli.verbose) {
+                let dest_string = config
+                    .dest
+                    .clone()
+                    .unwrap_or_else(|| ".copilot-context".to_string());
+
+                if let Err(e) =
+                    clean::clean_context_folder(&dest_string, &config.sources, cli.verbose)
+                {
                     eprintln!("Error cleaning context folder: {}", e);
                 }
                 return;
@@ -276,6 +290,16 @@ fn main() {
                     if let Err(e) = files_func(&root, files, cli.verbose) {
                         eprintln!("copilot-context: error applying files rules: {}", e);
                     }
+                }
+            }
+            config::Source::Sh { name, script, dest } => {
+                if cli.verbose {
+                    println!("copilot-context: processing sh source: {}", name);
+                }
+                if let Err(e) =
+                    sh::run_script(&script, &std::path::PathBuf::from(dest), cli.verbose)
+                {
+                    eprintln!("copilot-context: error running script {}: {}", name, e);
                 }
             }
         }

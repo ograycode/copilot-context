@@ -35,6 +35,7 @@ pub struct SourceUpdate {
     pub dest: Option<String>,
     pub branch: Option<String>,
     pub files: Option<Vec<String>>,
+    pub script: Option<String>,
 }
 
 impl SourceUpdate {
@@ -45,6 +46,7 @@ impl SourceUpdate {
         dest: Option<String>,
         branch: Option<String>,
         files: Option<Vec<String>>,
+        script: Option<String>,
     ) -> Self {
         Self {
             repo,
@@ -53,6 +55,7 @@ impl SourceUpdate {
             dest,
             branch,
             files,
+            script,
         }
     }
 }
@@ -67,6 +70,7 @@ pub fn make_source(
     dest: String,
     branch: Option<String>,
     files: Option<Vec<String>>,
+    script: Option<String>,
 ) -> Source {
     match kind {
         "repo" => Source::Repo {
@@ -87,6 +91,11 @@ pub fn make_source(
             path: path.expect("--path required for path kind"),
             dest,
             files,
+        },
+        "sh" => Source::Sh {
+            name,
+            script: script.expect("--script required for sh kind"),
+            dest,
         },
         _ => panic!("Unknown kind: {}", kind),
     }
@@ -114,6 +123,11 @@ pub enum Source {
         dest: String,
         files: Option<Vec<String>>,
     },
+    Sh {
+        name: String,
+        script: String,
+        dest: String,
+    },
 }
 
 impl Source {
@@ -122,6 +136,7 @@ impl Source {
             Source::Repo { name, .. } => name,
             Source::Url { name, .. } => name,
             Source::Path { name, .. } => name,
+            Source::Sh { name, .. } => name,
         }
     }
     pub fn apply_update(&mut self, update: SourceUpdate) {
@@ -170,6 +185,14 @@ impl Source {
                 }
                 if let Some(f) = update.files {
                     *files = Some(f);
+                }
+            }
+            Source::Sh { script, dest, .. } => {
+                if let Some(s) = update.script {
+                    *script = s;
+                }
+                if let Some(d) = update.dest {
+                    *dest = d;
                 }
             }
         }
@@ -264,6 +287,12 @@ pub fn write_default_config_if_missing(path: &str) -> Result<bool, Box<dyn std::
                 dest: "vendor/notes/README.md".to_string(),
                 files: None,
             },
+            Source::Sh {
+                name: "example-script".to_string(),
+                script: "echo \'Hello from example script!\'\necho \'Current directory: $(pwd)\'"
+                    .to_string(),
+                dest: ".".to_string(),
+            },
         ],
     };
     save_config(path, &default)?;
@@ -344,6 +373,11 @@ mod tests {
                 dest: "notes/README.md".to_string(),
                 files: None,
             },
+            Source::Sh {
+                name: "script1".to_string(),
+                script: "echo \"hello world\"".to_string(),
+                dest: "scripts".to_string(),
+            },
         ];
         let config = ContextConfig {
             version: 1,
@@ -354,7 +388,7 @@ mod tests {
         let parsed: ContextConfig = toml::from_str(&toml).unwrap();
         assert_eq!(parsed.version, 1);
         assert_eq!(parsed.dest, Some(".copilot-context".to_string()));
-        assert_eq!(parsed.sources.len(), 3);
+        assert_eq!(parsed.sources.len(), 4);
         match &parsed.sources[0] {
             Source::Repo {
                 name,
@@ -398,6 +432,14 @@ mod tests {
                 assert!(files.is_none());
             }
             _ => panic!("Expected path source"),
+        }
+        match &parsed.sources[3] {
+            Source::Sh { name, script, dest } => {
+                assert_eq!(name, "script1");
+                assert_eq!(script, "echo \"hello world\"");
+                assert_eq!(dest, "scripts");
+            }
+            _ => panic!("Expected sh source"),
         }
     }
 
@@ -494,7 +536,7 @@ mod tests {
         let config = load_config(file_path.to_str().unwrap()).unwrap();
         assert_eq!(config.version, 1);
         assert_eq!(config.dest, Some(".copilot-context".to_string()));
-        assert_eq!(config.sources.len(), 3);
+        assert_eq!(config.sources.len(), 4);
     }
 
     #[test]

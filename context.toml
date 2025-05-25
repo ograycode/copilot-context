@@ -20,3 +20,24 @@ type = "path"
 name = "local-notes"
 path = "README.md"
 dest = "vendor/notes/README.md"
+
+# Example 1: Create a simple version file
+[[sources]]
+type = "sh"
+name = "simple-version"
+script = 'echo "# Version Information" > version.md && echo "Created on: $(date)" >> version.md && echo "Rust version: $(rustc --version)" >> version.md'
+dest = "metadata"
+
+# Example 2: Generate directory listing
+[[sources]]
+type = "sh"
+name = "dir-list"
+script = 'ls -la > dir-list.txt'
+dest = "info"
+
+# Example 3: System information
+[[sources]]
+type = "sh"
+name = "system-info"
+script = 'uname -a > system-info.txt && echo "CPU: $(sysctl -n machdep.cpu.brand_string 2>/dev/null || echo "Unknown")" >> system-info.txt'
+dest = "system"
