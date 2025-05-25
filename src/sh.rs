@@ -67,7 +67,7 @@ pub fn run_script(script: &str, dest: &Path, verbose: bool) -> Result<(), String
     // Check exit status
     if !output.status.success() {
         return Err(format!(
-            "Script execution failed with status {}:\\nStdout:\\n{}\\nStderr:\\n{}",
+            "Script execution failed with status {}:\nStdout:\n{}\nStderr:\n{}",
             output.status, stdout, stderr
         ));
     }
@@ -78,9 +78,9 @@ pub fn run_script(script: &str, dest: &Path, verbose: bool) -> Result<(), String
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempfile::tempdir;
     use std::fs::File;
     use std::io::Read;
+    use tempfile::tempdir;
 
     #[test]
     fn test_run_script_success() {
