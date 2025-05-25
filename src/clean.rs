@@ -108,12 +108,10 @@ pub fn clean_context_folder(dest: &str, sources: &[Source], verbose: bool) -> Re
                         println!("Removed directory: {}", path.display());
                     }
                 }
-            } else {
-                if let Err(e) = std::fs::remove_file(&path) {
-                    eprintln!("Failed to remove file {}: {}", path.display(), e);
-                } else if verbose {
-                    println!("Removed file: {}", path.display());
-                }
+            } else if let Err(e) = std::fs::remove_file(&path) {
+                eprintln!("Failed to remove file {}: {}", path.display(), e);
+            } else if verbose {
+                println!("Removed file: {}", path.display());
             }
         }
     }
