@@ -72,6 +72,7 @@ dest = "script_output"
 - **Copy from local paths**: Add your own files
 - **Download raw files via HTTP(S)**
 - **Run shell scripts**: Execute custom shell commands and include their output or side-effects.
+- **Combine files**: Concatenate multiple files from your context folder into a single string, with options for headers, separators, and clipboard output.
 - **Flatten/rename output structure**
 - **Summary log or JSON metadata output**
 - **Clean command**: Remove files not specified in the configuration
@@ -86,6 +87,40 @@ dest = "script_output"
   - For `sh` kind: `copilot-context update --name my-script --script "echo updated"`
 - Initialize a config: `copilot-context init`
 - Clean context folder: `copilot-context clean`
+- Combine files: `copilot-context combine <patterns...> [options]`
+  - Example: `copilot-context combine "src/**/*.rs" "docs/*.md" --output combined.txt --with-headers`
+  - Example: `copilot-context combine "lib/**" --clipboard --separator "\n---\n"`
+  - Options:
+    - `patterns...`: One or more glob patterns or file paths to include (relative to the context directory).
+    - `-o, --output <path>`: Write combined content to a file instead of stdout.
+    - `-c, --clipboard`: Copy combined content to the clipboard (conflicts with `--output`).
+    - `--with-headers`: Add a header comment before each file's content (e.g., `// File: src/main.rs`).
+    - `--header-format <format>`: Custom header format. Use `{path}` for the file's relative path (default: `// File: {path}`). Requires `--with-headers`.
+    - `--separator <string>`: String to insert between combined files (default: newline).
+    - `--sort-files`: Sort files alphabetically before combining (default: true). Use `--no-sort-files` to disable.
+
+  - Example Output:
+    - If you have `file1.txt` with content `Hello` and `file2.txt` with content `World` in your context folder:
+    - Default: `copilot-context combine "file*.txt"`
+      ```
+      Hello
+      World
+      ```
+    - With headers: `copilot-context combine "file*.txt" --with-headers`
+      ```
+      // File: file1.txt
+      Hello
+      // File: file2.txt
+      World
+      ```
+    - With custom header and separator: `copilot-context combine "file*.txt" --with-headers --header-format "### {path} ###" --separator "\n---\n"`
+      ```
+      ### file1.txt ###
+      Hello
+      ---
+      ### file2.txt ###
+      World
+      ```
 
 See `copilot-context --help` for all options.
 

@@ -1,4 +1,5 @@
 use clap::{Parser, Subcommand};
+use std::path::PathBuf;
 
 mod clean;
 mod config;
@@ -6,8 +7,10 @@ mod copy;
 mod fetch;
 mod git;
 mod sh;
+mod combine;
 
 use config::{match_files_and_mark, parse_file_rules};
+use combine::CombineArgs;
 
 #[derive(Subcommand, Debug)]
 enum Commands {
@@ -68,6 +71,9 @@ enum Commands {
     /// Clean the context folder, removing files not specified in the configuration
     #[clap(about = "Clean the context folder, removing files not specified in the configuration")]
     Clean,
+    /// Combine files from the context directory
+    #[clap(about = "Combine files from the context directory into a single output or the clipboard")]
+    Combine(CombineArgs),
 }
 
 #[derive(Parser, Debug)]
@@ -189,6 +195,14 @@ fn main() {
                     clean::clean_context_folder(&dest_string, &config.sources, cli.verbose)
                 {
                     eprintln!("Error cleaning context folder: {}", e);
+                }
+                return;
+            }
+            Commands::Combine(args) => {
+                let config = load_config(&cli.config).expect("Failed to load config");
+                match combine::handle_combine_action(args, &config, cli.verbose) {
+                    Ok(_) => {},
+                    Err(e) => eprintln!("Error combining files: {}", e),
                 }
                 return;
             }
