@@ -223,26 +223,56 @@ pub fn match_files_and_mark(
     rules: &[FileRule],
 ) -> Vec<(std::path::PathBuf, bool)> {
     let mut results = Vec::new();
-    for entry in WalkDir::new(root).into_iter().filter_map(Result::ok) {
-        let rel_path = entry.path().strip_prefix(root).unwrap();
+
+    if rules.is_empty() {
+        return results;
+    }
+
+    let keep_patterns: Vec<&Pattern> = rules
+        .iter()
+        .filter_map(|r| match r {
+            FileRule::Keep(p) => Some(p),
+            _ => None,
+        })
+        .collect();
+
+    let delete_patterns: Vec<&Pattern> = rules
+        .iter()
+        .filter_map(|r| match r {
+            FileRule::Delete(p) => Some(p),
+            _ => None,
+        })
+        .collect();
+
+    for entry_result in WalkDir::new(root).min_depth(1).into_iter() {
+        let entry = match entry_result {
+            Ok(e) => e,
+            Err(_) => continue,
+        };
+        let path = entry.path();
+
+        let rel_path = match path.strip_prefix(root) {
+            Ok(p) => p,
+            Err(_) => continue,
+        };
         let rel_str = rel_path.to_string_lossy();
-        let mut action = None;
-        for rule in rules {
-            match rule {
-                FileRule::Delete(pat) if pat.matches(&rel_str) => {
-                    action = Some(false);
-                    break;
-                }
-                FileRule::Keep(pat) if pat.matches(&rel_str) => {
-                    action = Some(true);
-                    break;
-                }
-                _ => {}
-            }
+
+        let mut should_be_kept: bool;
+
+        if !keep_patterns.is_empty() {
+            should_be_kept = keep_patterns.iter().any(|p| p.matches(&rel_str));
+        } else {
+            should_be_kept = true;
         }
-        // Default: keep
-        let keep = action.unwrap_or(true);
-        results.push((entry.path().to_path_buf(), keep));
+
+        if should_be_kept
+            && !delete_patterns.is_empty()
+            && delete_patterns.iter().any(|p| p.matches(&rel_str))
+        {
+            should_be_kept = false;
+        }
+
+        results.push((path.to_path_buf(), should_be_kept));
     }
     results
 }
@@ -324,16 +354,19 @@ mod tests {
         fs::write(&file1, "test").unwrap();
         fs::write(&file2, "test").unwrap();
         fs::write(&file3, "test").unwrap();
-        // Correct rule order: delete first, then keep all, then explicit keep
+
+        // Test with both keep and delete patterns
         let rules = parse_file_rules(&[
             "!foo.log".to_string(),
-            "*".to_string(),
-            "bar.txt".to_string(),
+            "*.txt".to_string(),
+            "*.md".to_string(),
         ]);
+
         let results = match_files_and_mark(dir.path(), &rules)
             .into_iter()
             .filter(|(p, _)| p.parent() == Some(dir.path()) && p.is_file())
             .collect::<Vec<_>>();
+
         let mut keep = vec![];
         let mut delete = vec![];
         for (path, k) in &results {
@@ -346,9 +379,58 @@ mod tests {
                 }
             }
         }
+
         assert!(keep.contains(&"bar.txt".to_string()));
         assert!(keep.contains(&"baz.md".to_string()));
         assert!(delete.contains(&"foo.log".to_string()));
+
+        // Test with only keep patterns - only matching files should be kept
+        let rules = parse_file_rules(&["*.txt".to_string()]);
+        let results = match_files_and_mark(dir.path(), &rules)
+            .into_iter()
+            .filter(|(p, _)| p.parent() == Some(dir.path()) && p.is_file())
+            .collect::<Vec<_>>();
+
+        let mut keep = vec![];
+        let mut delete = vec![];
+        for (path, k) in &results {
+            let fname = path.file_name().map(|f| f.to_string_lossy().to_string());
+            if let Some(name) = fname {
+                if *k {
+                    keep.push(name);
+                } else {
+                    delete.push(name);
+                }
+            }
+        }
+
+        assert!(keep.contains(&"bar.txt".to_string()));
+        assert!(!keep.contains(&"baz.md".to_string()));
+        assert!(!keep.contains(&"foo.log".to_string()));
+
+        // Test with only delete patterns - all non-matching files should be kept
+        let rules = parse_file_rules(&["!*.txt".to_string()]);
+        let results = match_files_and_mark(dir.path(), &rules)
+            .into_iter()
+            .filter(|(p, _)| p.parent() == Some(dir.path()) && p.is_file())
+            .collect::<Vec<_>>();
+
+        let mut keep = vec![];
+        let mut delete = vec![];
+        for (path, k) in &results {
+            let fname = path.file_name().map(|f| f.to_string_lossy().to_string());
+            if let Some(name) = fname {
+                if *k {
+                    keep.push(name);
+                } else {
+                    delete.push(name);
+                }
+            }
+        }
+
+        assert!(!keep.contains(&"bar.txt".to_string()));
+        assert!(keep.contains(&"baz.md".to_string()));
+        assert!(keep.contains(&"foo.log".to_string()));
     }
 
     #[test]
@@ -483,6 +565,20 @@ mod tests {
             FileRule::Delete(pat) => assert!(pat.matches("foo/bar.rs")),
             _ => panic!("Expected Delete pattern"),
         }
+
+        // Test with only keep patterns
+        let keep_rules = parse_file_rules(&["*.rs".to_string()]);
+        let has_keep_patterns = keep_rules
+            .iter()
+            .any(|rule| matches!(rule, FileRule::Keep(_)));
+        assert!(has_keep_patterns);
+
+        // Test with only delete patterns
+        let delete_rules = parse_file_rules(&["!*.rs".to_string()]);
+        let has_keep_patterns = delete_rules
+            .iter()
+            .any(|rule| matches!(rule, FileRule::Keep(_)));
+        assert!(!has_keep_patterns);
     }
 
     #[test]
@@ -490,12 +586,19 @@ mod tests {
         let dir = tempdir().unwrap();
         let file1 = dir.path().join("foo.txt");
         fs::write(&file1, "test").unwrap();
+
+        // Empty rules case
         let rules = parse_file_rules(&[]); // No rules
+        let results = match_files_and_mark(dir.path(), &rules);
+        assert!(results.is_empty()); // With no rules, no files should be processed
+
+        // Only delete rules case - files not matching delete pattern should be kept
+        let rules = parse_file_rules(&["!bar.txt".to_string()]); // Only delete rule
         let results = match_files_and_mark(dir.path(), &rules);
         let mut found = false;
         for (path, keep) in results {
             if path.file_name().map(|f| f == "foo.txt").unwrap_or(false) {
-                assert!(keep);
+                assert!(keep); // foo.txt should be kept since it doesn't match !bar.txt
                 found = true;
             }
         }
@@ -549,5 +652,19 @@ mod tests {
         let result = write_default_config_if_missing(file_path.to_str().unwrap());
         assert!(result.is_ok());
         assert!(!result.unwrap()); // Should not overwrite, so returns false
+    }
+
+    #[test]
+    fn test_empty_rules() {
+        let dir = tempdir().unwrap();
+        let file1 = dir.path().join("test.txt");
+        fs::write(&file1, "test").unwrap();
+
+        // Empty rules should result in no files being kept
+        let rules = parse_file_rules(&[]);
+        let results = match_files_and_mark(dir.path(), &rules);
+
+        // Should be empty because we return early with empty results
+        assert!(results.is_empty());
     }
 }
