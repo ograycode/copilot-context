@@ -1,10 +1,8 @@
 use std::fs;
 use std::io::{self, Write};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use anyhow::{Context, Result};
 use glob::glob;
-use arboard;
-use atty;
 
 use crate::config::ContextConfig;
 
@@ -152,7 +150,7 @@ mod tests {
     use super::*;
     use std::fs::{self, File};
     use std::io::Read;
-    use std::path::PathBuf;
+    use std::path::{Path, PathBuf};
     use tempfile::tempdir;
 
     fn create_dummy_config(dest_path: &Path) -> ContextConfig {
