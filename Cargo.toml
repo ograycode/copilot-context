@@ -1,6 +1,6 @@
 [package]
 name = "copilot-context"
-version = "0.1.0-alpha.20"
+version = "0.1.0-alpha.21"
 edition = "2021"
 
 description = "Curated, reproducible local context folder generator for Copilot and LLM tools."
