@@ -1,15 +1,15 @@
 use clap::{Parser, Subcommand};
 
 mod clean;
+mod combine;
 mod config;
 mod copy;
 mod fetch;
 mod git;
 mod sh;
-mod combine;
 
-use config::{match_files_and_mark, parse_file_rules};
 use combine::CombineArgs;
+use config::{match_files_and_mark, parse_file_rules};
 
 #[derive(Subcommand, Debug)]
 enum Commands {
@@ -71,7 +71,9 @@ enum Commands {
     #[clap(about = "Clean the context folder, removing files not specified in the configuration")]
     Clean,
     /// Combine files from the context directory
-    #[clap(about = "Combine files from the context directory into a single output or the clipboard")]
+    #[clap(
+        about = "Combine files from the context directory into a single output or the clipboard"
+    )]
     Combine(CombineArgs),
 }
 
@@ -200,7 +202,7 @@ fn main() {
             Commands::Combine(args) => {
                 let config = load_config(&cli.config).expect("Failed to load config");
                 match combine::handle_combine_action(args, &config, cli.verbose) {
-                    Ok(_) => {},
+                    Ok(_) => {}
                     Err(e) => eprintln!("Error combining files: {}", e),
                 }
                 return;
