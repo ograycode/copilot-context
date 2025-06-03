@@ -150,7 +150,7 @@ mod tests {
     use super::*;
     use std::fs::{self, File};
     use std::io::Read;
-    use std::path::{Path, PathBuf};
+    use std::path::Path;
     use tempfile::tempdir;
 
     fn create_dummy_config(dest_path: &Path) -> ContextConfig {
@@ -183,8 +183,6 @@ mod tests {
             sort_files: true,
         };
 
-        // Capture stdout for testing
-        let mut_output: Vec<u8> = Vec::new();
         // This is a simplified way to test stdout; real applications might use a library or more robust capturing.
         // For this test, we'll check file output instead, as stdout capturing is non-trivial.
         let output_file_path = dir.path().join("output.txt");
