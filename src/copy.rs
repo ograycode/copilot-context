@@ -5,9 +5,14 @@ use std::path::Path;
 pub fn copy_local(src: &str, dest: &str, verbose: bool) -> io::Result<()> {
     let src_path = Path::new(src);
     let dest_path = Path::new(dest);
-    eprintln!("🔍 current dir = {}", std::env::current_dir()?.display());
+    if verbose {
+        eprintln!(
+            "copilot-context: current dir = {}",
+            std::env::current_dir()?.display()
+        );
+    }
     if !src_path.exists() {
-        println!(
+        eprintln!(
             "copilot-context: source path '{}' does not exist",
             src_path.display()
         );
@@ -18,13 +23,10 @@ pub fn copy_local(src: &str, dest: &str, verbose: bool) -> io::Result<()> {
     }
     if src_path.is_file() {
         fs::create_dir_all(dest_path.parent().unwrap())?;
-        println!("copilot-context: copying file {} -> {}", src, dest);
-        println!("dest_path.exists() = {}", dest_path.exists());
-        println!(
-            "dest_path.parent().unwrap() = {}",
-            dest_path.parent().unwrap().display()
-        );
-        fs::copy(src_path, dest_path).expect("Failed to copy file");
+        if verbose {
+            println!("copilot-context: copying file {} -> {}", src, dest);
+        }
+        fs::copy(src_path, dest_path)?;
     } else if src_path.is_dir() {
         copy_dir_all(src_path, dest_path, verbose)?;
     }

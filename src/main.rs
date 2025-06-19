@@ -297,7 +297,9 @@ fn main() {
                     .as_path()
                     .to_str()
                     .expect("Failed to convert path to string");
-                println!("copilot-context: absolute source path: {}", abs_source_str);
+                if cli.verbose {
+                    println!("copilot-context: absolute source path: {}", abs_source_str);
+                }
                 if let Err(e) = copy::copy_local(abs_source_str, &dest, cli.verbose) {
                     eprintln!("copilot-context: error copying path {}: {}", name, e);
                 }
